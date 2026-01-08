@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../../tests/BeerSender.Domain.Tests/BeerSender.Domain.Tests.csproj" Id="21412bdf-2bd4-423a-8220-dfbdd1bfddcb" />
+  <Project Path="../BeerSender.Domain/BeerSender.Domain.csproj" />
+  <Project Path="../BeerSender.EventStore/BeerSender.EventStore.csproj" Id="53e178c8-2385-4aea-8430-202eac5eb033" />
+  <Project Path="../BeerSender.QueryAPI/BeerSender.QueryAPI.csproj" Id="75a8d4d2-a67d-4f43-a598-c6ae7bb61f07" />
+  <Project Path="../BeerSender.Web/BeerSender.Web.csproj" Id="c5ec35cf-f9a8-4715-8121-249238127128" />
+  <Project Path="BeerSender.Projections/BeerSender.Projections.csproj" Id="0b9b3e8d-9d83-4fcd-bdc6-94f178fd7543" />
+</Solution>
