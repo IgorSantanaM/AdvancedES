@@ -4,7 +4,7 @@ using BeerSender.Domain.Boxes.Commands;
 namespace BeerSender.Domain.Tests.Boxes;
 public class AddBeerHandlerTest : BoxTests<AddBeerBottle>
 {
-    protected override CommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler(eventStore);
+    protected override ICommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler(eventStore);
 
     [Fact]
     public void AddBeerBottle_ShouldAddBottle_WhenBoxIsEmpty()

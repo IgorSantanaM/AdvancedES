@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Marten;
 
 namespace BeerSender.Domain.Tests;
 
@@ -6,8 +7,18 @@ namespace BeerSender.Domain.Tests;
 /// Test base class for CommandHandler tests.
 /// </summary>
 /// <typeparam name="TCommand">The command type for the handler.</typeparam>
-public abstract class CommandHandlerTest<TCommand>
+public abstract class CommandHandlerTest<TCommand> : IClassFixture<MartenFixture>
 {
+
+    private readonly Dictionary<Guid, long> _streamVersions = new();
+
+    MartenFixture fixture;
+
+    protected CommandHandlerTest(MartenFixture fixture)
+    {
+        this.fixture = fixture;
+        Store = fixture.Store;
+    }
     /// <summary>
     /// If no explicit aggregateId is provided, this one will be used behind the scenes.
     /// </summary>
@@ -17,28 +28,33 @@ public abstract class CommandHandlerTest<TCommand>
     /// The command handler, to be provided in the Test class.
     /// This to account for additional injections
     /// </summary>
-    protected abstract CommandHandler<TCommand> Handler { get; }
+    protected abstract ICommandHandler<TCommand> Handler { get; }
 
     /// <summary>
     /// A fake, in-memory event store.
     /// </summary>
-    protected TestStore eventStore = new();
+    protected IDocumentStore Store { get; private set; }
 
     /// <summary>
     /// Sets a list of previous events for the default aggregate ID.
     /// </summary>
-    protected void Given(params object[] events)
+    protected async Task Given<TAggregate>(params object[] events)
+        where TAggregate : class
     {
-        Given(_aggregateId, events );
+       await Given<TAggregate>(_aggregateId, events );
     }
 
     /// <summary>
     /// Sets a list of previous events for a specified aggregate ID.
     /// </summary>
-    protected void Given(Guid aggregateId, params object[] events)
+    protected async Task Given<TAggregate>(Guid aggregateId, params object[] events)
     {
-        eventStore.previousEvents.AddRange(events
-            .Select((e, i) => new StoredEvent(aggregateId, i, DateTime.Now, e)));
+
+        if (events.IsEmpty())
+            return;
+
+        await using var session = Store.LightweightSession();
+        
     }
 
     /// <summary>

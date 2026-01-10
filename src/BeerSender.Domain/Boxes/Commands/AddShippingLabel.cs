@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Marten;
+using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Security.Cryptography.X509Certificates;
@@ -11,19 +12,21 @@ public record AddShippingLabel(
     ShippingLabel Label
 );
 
-public class AddShippingLabelHandler(IEventStore eventStore) : CommandHandler<AddShippingLabel>(eventStore)
+public class AddShippingLabelHandler(IDocumentStore store) : ICommandHandler<AddShippingLabel>
 {
-    public override void Handle(AddShippingLabel command)
+    public async Task Handle(AddShippingLabel command)
     {
-        var boxStream = GetStream<Box>(command.BoxId);
+        await using var session = store.IdentitySession();
 
-        var box = boxStream.GetEntity();
+        var box = await session.Events.AggregateStreamAsync<Box>(command.BoxId);
 
         if (command.Label.IsValid())
-            boxStream.Append(new ShippingLabelAdded(command.Label));
+            session.Events.Append(command.BoxId, new ShippingLabelAdded(command.Label));
 
         else
-            boxStream.Append(new FailedToAddShippingLabel(
+            session.Events.Append(command.BoxId, new FailedToAddShippingLabel(
                 FailedToAddShippingLabel.FailReason.TrackingCodeInvalid));
+
+        await session.SaveChangesAsync();
     }
 }
