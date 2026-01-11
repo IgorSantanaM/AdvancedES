@@ -1,6 +1,6 @@
 using BeerSender.Domain;
-using BeerSender.EventStore;
 using BeerSender.Web.EventPublishing;
+using JasperFx.Events.Daemon;
 using Marten;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,14 +13,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
 builder.Services.RegisterDomain();
-builder.Services.RegisterEventStore();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 
 builder.Services.AddMarten(opt =>
 {
     var connectionString = builder.Configuration.GetConnectionString("MartenDB");
     opt.Connection(connectionString!);
-}).UseLightweightSessions();
+    opt.ApplyDomainConfig();
+    opt.AddProjections();
+}).AddAsyncDaemon(DaemonMode.Solo);
+
 builder.Services.AddSwaggerGen();
  
 var app = builder.Build();
