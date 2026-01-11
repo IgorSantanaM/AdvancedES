@@ -1,4 +1,5 @@
 using BeerSender.Domain;
+using BeerSender.Domain.Boxes;
 using BeerSender.Web.EventPublishing;
 using JasperFx.Events.Daemon;
 using Marten;
@@ -13,7 +14,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 
 builder.Services.RegisterDomain();
-builder.Services.AddTransient<INotificationService, NotificationService>();
 
 builder.Services.AddMarten(opt =>
 {
@@ -21,7 +21,13 @@ builder.Services.AddMarten(opt =>
     opt.Connection(connectionString!);
     opt.ApplyDomainConfig();
     opt.AddProjections();
-}).AddAsyncDaemon(DaemonMode.Solo);
+})
+.AddSubscriptionWithServices<EventHubSubscription>(ServiceLifetime.Singleton, opt =>
+{
+    opt.FilterIncomingEventsOnStreamType(typeof(Box));
+    opt.Options.BatchSize = 10;
+})
+.AddAsyncDaemon(DaemonMode.Solo);
 
 builder.Services.AddSwaggerGen();
  
