@@ -1,28 +1,33 @@
 ﻿using BeerSender.Domain.Boxes;
 using BeerSender.Domain.Boxes.Commands;
+using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace BeerSender.Domain.Tests.Boxes;
-public class AddBeerHandlerTest : BoxTests<AddBeerBottle>
+
+[Collection("Marten collection")]
+public class AddBeerHandlerTest(MartenFixture fixture) 
+    : BoxTests<AddBeerBottle>(fixture)
 {
-    protected override ICommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler(eventStore);
+    protected override ICommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler(Store);
 
     [Fact]
-    public void AddBeerBottle_ShouldAddBottle_WhenBoxIsEmpty()
+    public async Task AddBeerBottle_ShouldAddBottle_WhenBoxIsEmpty()
     {
         const int NUMBER_OF_BOTTLES = 6;
 
         // Arrange
-        Given(
+        await Given<Box>(
             Box_created_with_capacity(NUMBER_OF_BOTTLES)
             );
 
         // Act
-        When(
+        await When(
             Add_beer_Bottle(carte_blanche)
         );
 
         // Assert
-        Then(
+        await Then(
            Beer_bottle_added(carte_blanche)
         );
     }

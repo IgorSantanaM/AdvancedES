@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Marten;
+using System.Threading.Tasks;
 
 namespace BeerSender.Domain.Tests;
 
@@ -48,42 +49,55 @@ public abstract class CommandHandlerTest<TCommand> : IClassFixture<MartenFixture
     /// Sets a list of previous events for a specified aggregate ID.
     /// </summary>
     protected async Task Given<TAggregate>(Guid aggregateId, params object[] events)
+        where TAggregate : class
     {
 
         if (events.IsEmpty())
             return;
 
         await using var session = Store.LightweightSession();
+
+        var stream = session.Events.StartStream<TAggregate>(aggregateId, events);
+
+        _streamVersions[aggregateId] = stream.Version + stream.Events.Count;
+
+        await session.SaveChangesAsync();   
         
     }
 
     /// <summary>
     /// Triggers the handling of a command against the configured events.
     /// </summary>
-    protected void When(TCommand command)
+    protected async Task When(TCommand command)
     {
-        Handler.Handle(command);
+        await Handler.Handle(command);
     }
 
     /// <summary>
     /// Asserts that the expected events have been appended to the event store
     /// for the default aggregate ID.
     /// </summary>
-    protected void Then(params object[] expectedEvents)
+    protected async Task Then(params object[] expectedEvents)
     {
-        Then(_aggregateId, expectedEvents);
+        await Then(_aggregateId, expectedEvents);
     }
 
     /// <summary>
     /// Asserts that the expected events have been appended to the event store
     /// for a specific aggregate ID.
     /// </summary>
-    protected void Then(Guid aggregateId, params object[] expectedEvents)
+    protected async Task Then(Guid aggregateId, params object[] expectedEvents)
     {
-        var actualEvents = eventStore.newEvents
-            .Where(e => e.AggregateId == aggregateId)
-            .OrderBy(e => e.SequenceNumber)
-            .Select(e => e.EventData)
+        await using var session = Store.LightweightSession();
+
+        var version = _streamVersions.ContainsKey(aggregateId) ?
+            _streamVersions[aggregateId] + 1 : 0L;
+
+        var storedEvents = await session.Events.FetchStreamAsync(aggregateId, fromVersion: version);
+
+        var actualEvents = storedEvents
+            .OrderBy(e => e.Version)
+            .Select(e => e.Data)
             .ToArray();
 
         actualEvents.Length.Should().Be(expectedEvents.Length);
@@ -97,9 +111,6 @@ public abstract class CommandHandlerTest<TCommand> : IClassFixture<MartenFixture
             }
             catch (InvalidOperationException e)
             {
-                // Empty event with matching type is OK. This means that the event class
-                // has no properties. If the types match in this situation, the correct
-                // event has been appended. So we should ignore this exception.
                 if (!e.Message.StartsWith("No members were found for comparison."))
                     throw;
             }
