@@ -1,4 +1,5 @@
-﻿using BeerSender.Domain.Boxes.Commands;
+﻿using BeerSender.Domain.Boxes;
+using BeerSender.Domain.Boxes.Commands;
 using BeerSender.Domain.JsonConfiguration;
 using BeerSender.Domain.Projections;
 using JasperFx.Events.Projections;
@@ -28,6 +29,10 @@ namespace BeerSender.Domain
                 opt.TypeInfoResolver = new CommandTypeResolver();
             });
 
+            options.Events.MetadataConfig.CorrelationIdEnabled = true;
+            options.Events.MetadataConfig.CausationIdEnabled = true;
+            options.Events.MetadataConfig.HeadersEnabled = true;
+
             options.Schema.For<UnsentBox>().Identity(u => u.BoxId);
             options.Schema.For<OpenBox>().Identity(o => o.BoxId);
             options.Schema.For<BottleInBoxes>().Identity(o => o.BottleId);
@@ -40,6 +45,8 @@ namespace BeerSender.Domain
             options.Projections.Add<UnsentBoxProjection>(ProjectionLifecycle.Async);
             options.Projections.Add<OpenBoxProjection>(ProjectionLifecycle.Async);
             options.Projections.Add<BottleInBoxesProjection>(ProjectionLifecycle.Async);
+
+            options.Projections.Snapshot<Box>(Marten.Events.Projections.SnapshotLifecycle.Async);
         }
     }
 }
