@@ -5,22 +5,18 @@ namespace BeerSender.Domain.Boxes.Commands;
 public record CloseBox
 (
     Guid BoxId
-);
+) : ICommand;
 
-public class CloseBoxHandler(IDocumentStore store)
+public class CloseBoxHandler
     : ICommandHandler<CloseBox>
 {
-    public async Task Handle(CloseBox command)
+    public async Task Handle(IDocumentSession session, CloseBox command)
     {
-        await using var session = store.IdentitySession();
         var box = await session.Events.AggregateStreamAsync<Box>(command.BoxId);
-
 
         if (box!.BeerBottles.Any())
            session.Events.Append(command.BoxId, new BoxClosed());
         else
             session.Events.Append(command.BoxId, new FailedToCloseBox(FailedToCloseBox.FailReason.BoxWasEmpty));
-
-        await session.SaveChangesAsync();
     }
 }
