@@ -4,14 +4,14 @@ public class Box
 {
     public Guid Id { get; set; }
     public List<BeerBottle> BeerBottles { get; } = [];
-    public BoxCapacity? Capacity { get; private set; }
+    public BoxCapacity? BoxType { get; private set; }
     public ShippingLabel? ShippingLabel { get; private set; }
     public bool IsClosed { get; private set; }
     public bool IsSent { get; private set; }
 
     public void Apply(BoxCreated @event)
     {
-        Capacity = @event.Capacity;
+        BoxType = @event.BoxType;
     }
 
     public void Apply(BeerBottleAdded @event)
@@ -34,5 +34,5 @@ public class Box
         IsSent = true;
     }
 
-    public bool IsFull => BeerBottles.Count >= Capacity?.NumberOfSpots;
+    public bool IsFull => BeerBottles.Count >= BoxType?.NumberOfSpots;
 }

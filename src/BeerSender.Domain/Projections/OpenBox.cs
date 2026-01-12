@@ -1,7 +1,6 @@
 ﻿using BeerSender.Domain.Boxes;
-using JasperFx.Events;
-using Marten.Events;
-using Marten.Events.Projections;
+using JasperFx.Events.Aggregation;
+using Marten.Events.Aggregation;
 
 namespace BeerSender.Domain.Projections
 {
@@ -12,40 +11,24 @@ namespace BeerSender.Domain.Projections
         public int NumberOfBottles { get; set; }
     }
 
-    public class OpenBoxProjection : EventProjection
+    public class OpenBoxProjection : SingleStreamProjection<OpenBox, Guid>
     {
-        // Mapping relevant events for the projection
         public OpenBoxProjection()
         {
-            // Verifies if the BoxCreated event has been stored, if yes do the projection.
-            Project<IEvent<BoxCreated>>((evt, operations) =>
+            DeleteEvent<BoxClosed>();
+        }
+
+        public static OpenBox Create(BoxCreated started)
+        {
+            return new OpenBox
             {
-                operations.Store(new OpenBox
-                {
-                    BoxId = evt.StreamId,
-                    Capacity = evt.Data.Capacity.NumberOfSpots,
-                });
-            });
+                Capacity = started.BoxType.NumberOfSpots
+            };
+        }
 
-            // Verifies if the BoxClosed event has been stored, if yes do the projection.
-            Project<IEvent<BoxClosed>>((evt, operations) =>
-            {
-                operations.Delete<OpenBox>(evt.StreamId);
-            });
-
-            // Verifies if the BoxClosed event has been stored, if yes do the projection.
-            ProjectAsync<IEvent<BeerBottleAdded>>(async (evt, operations, token) =>
-            {
-                if(token.IsCancellationRequested) return;
-
-                var openBox = await operations.LoadAsync<OpenBox>(evt.StreamId);
-
-                if(openBox is null)
-                    return;
-
-                openBox.NumberOfBottles++;
-                operations.Store(openBox);
-            });
+        public static void Apply(BeerBottleAdded _, OpenBox box)
+        {
+            box.NumberOfBottles++;
         }
     }
 }

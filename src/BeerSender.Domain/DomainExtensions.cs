@@ -25,12 +25,15 @@ namespace BeerSender.Domain
 
             options.Schema.For<UnsentBox>().Identity(u => u.BoxId);
             options.Schema.For<OpenBox>().Identity(o => o.BoxId);
+            options.Schema.For<BottleInBoxes>().Identity(o => o.BottleId);
+
         }
 
         public static void AddProjections(this StoreOptions options)
         {
             options.Projections.Add<UnsentBoxProjection>(ProjectionLifecycle.Async);
             options.Projections.Add<OpenBoxProjection>(ProjectionLifecycle.Async);
+            options.Projections.Add<BottleInBoxesProjection>(ProjectionLifecycle.Async);
         }
     }
 }
