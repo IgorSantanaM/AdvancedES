@@ -16,13 +16,13 @@ public class AddShippingLabelHandler() : ICommandHandler<AddShippingLabel>
 {
     public async Task Handle(IDocumentSession session, AddShippingLabel command)
     {
-        var box = await session.Events.AggregateStreamAsync<Box>(command.BoxId);
+        var stream = await session.Events.FetchForWriting<Box>(command.BoxId);
+        var box = stream.Aggregate;
 
         if (command.Label.IsValid())
-            session.Events.Append(command.BoxId, new ShippingLabelAdded(command.Label));
+            stream.AppendOne(new ShippingLabelAdded(command.Label));
 
         else
-            session.Events.Append(command.BoxId, new FailedToAddShippingLabel(
-                FailedToAddShippingLabel.FailReason.TrackingCodeInvalid));
+            stream.AppendOne(new FailedToAddShippingLabel(FailedToAddShippingLabel.FailReason.TrackingCodeInvalid));
     }
 }

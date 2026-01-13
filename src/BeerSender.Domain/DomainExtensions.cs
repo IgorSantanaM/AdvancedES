@@ -37,7 +37,6 @@ namespace BeerSender.Domain
             options.Schema.For<OpenBox>().Identity(o => o.BoxId);
             options.Schema.For<BottleInBoxes>().Identity(o => o.BottleId);
             options.Schema.For<LoggedCommand>().Identity(o => o.CommandId);
-
         }
 
         public static void AddProjections(this StoreOptions options)
