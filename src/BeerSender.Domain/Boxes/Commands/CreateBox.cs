@@ -15,8 +15,10 @@ public class CreateBoxHandler()
 {
     public async Task Handle(IDocumentSession session, CreateBox command)
     {
+        var stream = await session.Events.FetchForWriting<Box>(command.BoxId);
+
         var capacity = BoxCapacity.Create(command.DesiredNumberOfSpots);
 
-        session.Events.StartStream<Box>(command.BoxId, new BoxCreated(capacity, command.FriendlyName, command.ContainerType));
+        stream.AppendOne(new BoxCreated(capacity, command.FriendlyName, command.ContainerType));
     }
 }
