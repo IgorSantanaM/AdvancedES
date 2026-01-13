@@ -8,7 +8,7 @@ namespace BeerSender.Domain.Tests;
 /// Test base class for CommandHandler tests.
 /// </summary>
 /// <typeparam name="TCommand">The command type for the handler.</typeparam>
-public abstract class CommandHandlerTest<TCommand> : IClassFixture<MartenFixture>
+public abstract class CommandHandlerTest<TCommand> where TCommand :  class, ICommand
 {
 
     private readonly Dictionary<Guid, long> _streamVersions = new();
@@ -70,7 +70,9 @@ public abstract class CommandHandlerTest<TCommand> : IClassFixture<MartenFixture
     /// </summary>
     protected async Task When(TCommand command)
     {
-        await Handler.Handle(command);
+        await using var session = Store.IdentitySession();
+        await Handler.Handle(session, command);
+        await session.SaveChangesAsync();
     }
 
     /// <summary>

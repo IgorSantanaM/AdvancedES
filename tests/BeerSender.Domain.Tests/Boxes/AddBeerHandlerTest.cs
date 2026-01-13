@@ -9,7 +9,7 @@ namespace BeerSender.Domain.Tests.Boxes;
 public class AddBeerHandlerTest(MartenFixture fixture) 
     : BoxTests<AddBeerBottle>(fixture)
 {
-    protected override ICommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler(Store);
+    protected override ICommandHandler<AddBeerBottle> Handler => new AddBeerBottleHandler();
 
     [Fact]
     public async Task AddBeerBottle_ShouldAddBottle_WhenBoxIsEmpty()

@@ -4,14 +4,13 @@ namespace BeerSender.Domain.Boxes.Commands;
 
 public record SendBox(
     Guid BoxId
-);
+) : ICommand;
 
-public class SendBoxHandler(IDocumentStore store)
+public class SendBoxHandler()
     : ICommandHandler<SendBox>
 {
-    public async Task Handle(SendBox command)
+    public async Task Handle(IDocumentSession session, SendBox command)
     {
-        await using var session = store.IdentitySession();
         var box = await session.Events.AggregateStreamAsync<Box>(command.BoxId);
 
         var success = true;
@@ -32,7 +31,5 @@ public class SendBoxHandler(IDocumentStore store)
         {
             session.Events.Append(command.BoxId, new BoxSent());
         }
-
-        await session.SaveChangesAsync();
     }
 }

@@ -1,6 +1,13 @@
-﻿namespace BeerSender.Domain.Boxes;
+﻿using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
-public record BoxCreated(BoxCapacity Capacity);
+namespace BeerSender.Domain.Boxes;
+
+public record BoxCreated(
+    [property: JsonPropertyName("Capactiy")] BoxCapacity BoxType,
+    string? FriendlyName,
+    ContainerType ContainerType = ContainerType.Bottle
+    );
 
 public record FailedToCreateBox(FailedToCreateBox.FailReason Reason)
 {
